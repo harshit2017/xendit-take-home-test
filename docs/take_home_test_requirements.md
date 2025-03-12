@@ -21,7 +21,7 @@ Candidates will be required to implement new features that extend the existing f
 - Consider security, performance, and scalability
 
 ## Time Allocation
-Candidates should spend approximately 4-6 hours on this test. The focus should be on quality rather than quantity of features implemented.
+Candidates should spend approximately 12 hours on this test if planning to implement most asks. The focus should be on quality rather than quantity of features implemented.
 
 ## Evaluation Criteria
 Candidates will be evaluated based on:
