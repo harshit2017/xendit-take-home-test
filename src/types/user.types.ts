@@ -1,4 +1,6 @@
 // src/types/user.types.ts
+import { INotificationPreferences } from './notification.types';
+import { SupportedLanguage } from './localization.types';
 
 export enum UserRole {
   CUSTOMER = 'customer',
@@ -23,6 +25,8 @@ export interface IUser {
   phone: string;
   address: IAddress;
   role: UserRole;
+  notificationPreferences?: INotificationPreferences;
+  preferredLanguage?: SupportedLanguage;
   createdAt?: Date;
   updatedAt?: Date;
 }

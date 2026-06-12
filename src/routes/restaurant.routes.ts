@@ -10,6 +10,7 @@ const restaurantController = new RestaurantController();
 // Public routes
 router.get('/', restaurantController.getAllRestaurants);
 router.get('/nearby', restaurantController.getNearbyRestaurants);
+router.get('/search', restaurantController.searchRestaurants);
 router.get('/:id', restaurantController.getRestaurantById);
 
 // Protected routes - Restaurant owner only
@@ -25,6 +26,20 @@ router.put(
   authenticate,
   authorize(UserRole.RESTAURANT, UserRole.ADMIN),
   restaurantController.updateRestaurant
+);
+
+router.put(
+  '/:id/localizations',
+  authenticate,
+  authorize(UserRole.RESTAURANT, UserRole.ADMIN),
+  restaurantController.upsertRestaurantLocalization
+);
+
+router.put(
+  '/:id/menu/:menuItemId/localizations',
+  authenticate,
+  authorize(UserRole.RESTAURANT, UserRole.ADMIN),
+  restaurantController.upsertMenuItemLocalization
 );
 
 router.delete(

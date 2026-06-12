@@ -4,6 +4,8 @@ import User from '../models/user.model';
 import { OrderStatus } from '../types/order.types';
 import { UserRole } from '../types/user.types';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../utils/errors';
+import { notificationService } from './notification.service';
+import { loyaltyService } from './loyalty.service';
 
 interface ILocation {
   latitude: number;
@@ -69,23 +71,37 @@ export class DeliveryService {
     }
     
     deliveryLocationStore.get(orderId)?.push(location);
-    
+
+    await notificationService.emitDeliveryLocation(
+      orderId,
+      {
+        orderId,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        timestamp: location.timestamp,
+      },
+      order.customerId.toString()
+    );
+
     // Update order status if provided
     if (status) {
       // Validate status transition
       const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+        [OrderStatus.SCHEDULED]: [],
+        [OrderStatus.SCHEDULED_PROCESSING]: [],
         [OrderStatus.PENDING]: [],
         [OrderStatus.CONFIRMED]: [OrderStatus.OUT_FOR_DELIVERY],
         [OrderStatus.PREPARING]: [OrderStatus.OUT_FOR_DELIVERY],
         [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED],
         [OrderStatus.DELIVERED]: [],
-        [OrderStatus.CANCELLED]: []
+        [OrderStatus.CANCELLED]: [],
       };
       
       if (!validTransitions[order.status].includes(status)) {
         throw new BadRequestError(`Cannot transition from ${order.status} to ${status}`);
       }
       
+      const previousStatus = order.status;
       order.status = status;
       
       // If order is delivered, set actual delivery time
@@ -94,6 +110,17 @@ export class DeliveryService {
       }
       
       await order.save();
+
+      await notificationService.sendOrderStatusNotification(
+        order.customerId.toString(),
+        order._id!.toString(),
+        previousStatus,
+        status
+      );
+
+      if (status === OrderStatus.DELIVERED) {
+        await loyaltyService.earnPointsForOrder(order._id!.toString());
+      }
     }
   }
   

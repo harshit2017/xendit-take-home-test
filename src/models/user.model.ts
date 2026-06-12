@@ -2,6 +2,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { IUser, UserRole, IUserDocument } from '../types/user.types';
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../types/notification.types';
+import { DEFAULT_LANGUAGE, SupportedLanguage } from '../types/localization.types';
 
 const userSchema: Schema = new Schema(
   {
@@ -38,6 +40,28 @@ const userSchema: Schema = new Schema(
       type: String,
       enum: Object.values(UserRole),
       default: UserRole.CUSTOMER,
+    },
+    notificationPreferences: {
+      order: {
+        statusUpdates: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.order.statusUpdates },
+        deliveryTracking: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.order.deliveryTracking },
+        restaurantMessages: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.order.restaurantMessages },
+        scheduledReminders: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.order.scheduledReminders },
+      },
+      loyalty: {
+        enabled: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.loyalty.enabled },
+      },
+      promotion: {
+        enabled: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.promotion.enabled },
+      },
+      system: {
+        enabled: { type: Boolean, default: DEFAULT_NOTIFICATION_PREFERENCES.system.enabled },
+      },
+    },
+    preferredLanguage: {
+      type: String,
+      enum: Object.values(SupportedLanguage),
+      default: DEFAULT_LANGUAGE,
     },
   },
   {

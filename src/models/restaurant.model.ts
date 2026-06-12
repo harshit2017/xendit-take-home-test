@@ -74,10 +74,37 @@ const restaurantSchema: Schema = new Schema(
       min: 0,
       max: 5,
     },
+    averageDeliveryTime: {
+      type: Number,
+      default: 30,
+      min: 0,
+    },
+    minimumOrderValue: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     isActive: {
       type: Boolean,
       default: true,
     },
+    localizations: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
+    menuLocalizations: [
+      {
+        menuItemId: {
+          type: Schema.Types.ObjectId,
+          ref: 'MenuItem',
+          required: true,
+        },
+        localizations: {
+          type: Schema.Types.Mixed,
+          default: {},
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -89,6 +116,11 @@ restaurantSchema.index({ location: '2dsphere' });
 
 // Create index for searching by name
 restaurantSchema.index({ name: 'text', description: 'text' });
+
+// Indexes for advanced search filters
+restaurantSchema.index({ isActive: 1, averageDeliveryTime: 1 });
+restaurantSchema.index({ isActive: 1, minimumOrderValue: 1 });
+restaurantSchema.index({ isActive: 1, rating: -1 });
 
 const Restaurant = mongoose.model<IRestaurant & Document>('Restaurant', restaurantSchema);
 

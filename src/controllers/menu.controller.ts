@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { MenuService } from '../services/menu.service';
 import { BadRequestError } from '../utils/errors';
+import { parseMenuSearchFilters } from '../utils/search.utils';
 
 export class MenuController {
   private menuService: MenuService;
@@ -13,7 +14,7 @@ export class MenuController {
   public getMenuItemsByRestaurant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { restaurantId } = req.params;
-      const menuItems = await this.menuService.getMenuItemsByRestaurant(restaurantId);
+      const menuItems = await this.menuService.getMenuItemsByRestaurant(restaurantId, req.language);
       
       res.status(200).json({
         status: 'success',
@@ -30,7 +31,7 @@ export class MenuController {
   public getMenuItemById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      const menuItem = await this.menuService.getMenuItemById(id);
+      const menuItem = await this.menuService.getMenuItemById(id, req.language);
       
       res.status(200).json({
         status: 'success',
@@ -102,9 +103,9 @@ export class MenuController {
 
   public searchMenuItems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { query, ...filters } = req.query;
-      const menuItems = await this.menuService.searchMenuItems(query as string, filters);
-      
+      const filters = parseMenuSearchFilters(req.query);
+      const menuItems = await this.menuService.searchMenuItemsWithFilters(filters);
+
       res.status(200).json({
         status: 'success',
         results: menuItems.length,

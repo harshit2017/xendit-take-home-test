@@ -1,4 +1,8 @@
 // src/types/restaurant.types.ts
+import {
+  IMenuItemLocalization,
+  LocalizedContentMap,
+} from './localization.types';
 
 export interface ILocation {
   type: string;
@@ -33,7 +37,11 @@ export interface IRestaurant {
   operatingHours: IOperatingHours;
   contactPhone: string;
   rating: number;
+  averageDeliveryTime: number;
+  minimumOrderValue: number;
   isActive: boolean;
+  localizations?: LocalizedContentMap;
+  menuLocalizations?: IMenuItemLocalization[];
   createdAt?: Date;
   updatedAt?: Date;
 }

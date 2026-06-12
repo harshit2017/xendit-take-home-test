@@ -117,6 +117,23 @@ const orderSchema: Schema = new Schema(
     actualDeliveryTime: {
       type: Date,
     },
+    isScheduled: {
+      type: Boolean,
+      default: false,
+    },
+    scheduledFor: {
+      type: Date,
+    },
+    processingStartedAt: {
+      type: Date,
+    },
+    processedAt: {
+      type: Date,
+    },
+    upcomingNotificationSent: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -129,6 +146,8 @@ orderSchema.index({ restaurantId: 1, createdAt: -1 });
 orderSchema.index({ deliveryPersonId: 1, status: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ isScheduled: 1, status: 1, scheduledFor: 1 });
+orderSchema.index({ isScheduled: 1, upcomingNotificationSent: 1, scheduledFor: 1 });
 
 const Order = mongoose.model<IOrder & Document>('Order', orderSchema);
 

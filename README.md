@@ -53,6 +53,8 @@ This is a backend API for a food delivery application that allows:
 Please review the following documentation to understand the project:
 
 - [Project Documentation](./docs/candidate_documentation.md) - Overview of the codebase and architecture
+- [API Documentation](./docs/api_documentation.md) - Full endpoint reference with curl examples
+- [Use Case Guide](./docs/use_case_guide.md) - End-to-end testing scenarios with curl commands
 - [Take Home Test Requirements](./docs/take_home_test_requirements.md) - General requirements for the test
 - [Feature Implementation Tasks](./docs/feature_implementation_tasks.md) - Specific features to implement
 - [Test Instructions and Evaluation Criteria](./docs/test_instructions_and_evaluation.md) - How to approach the test and how you'll be evaluated
@@ -80,6 +82,8 @@ Please follow the submission guidelines in the [Test Instructions](./docs/test_i
 - `npm start` - Start production server
 - `npm test` - Run tests
 - `npm run lint` - Run linter
+- `npm run seed` - Seed database with Indian demo data
+- `npm run socket-listener` - Listen for real-time Socket.io notifications
 
 ## Good luck!
 

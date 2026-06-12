@@ -2,27 +2,44 @@
 import MenuItem from '../models/menu.model';
 import Restaurant from '../models/restaurant.model';
 import { IMenuItem } from '../types/menu.types';
+import { SupportedLanguage } from '../types/localization.types';
+import { MenuSearchFilters } from '../types/search.types';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../utils/errors';
+import { buildMenuSort, toArray } from '../utils/search.utils';
+import { applyMenuItemLocalization, applyMenuItemsLocalization } from '../utils/localization.utils';
 
 export class MenuService {
-  public async getMenuItemsByRestaurant(restaurantId: string): Promise<IMenuItem[]> {
-    // Verify restaurant exists
+  public async getMenuItemsByRestaurant(
+    restaurantId: string,
+    locale?: SupportedLanguage
+  ): Promise<IMenuItem[]> {
     const restaurant = await Restaurant.findById(restaurantId);
     if (!restaurant) {
       throw new NotFoundError('Restaurant not found');
     }
-    
-    return MenuItem.find({ restaurantId, isAvailable: true });
+
+    const menuItems = await MenuItem.find({ restaurantId, isAvailable: true }).lean();
+    return locale
+      ? applyMenuItemsLocalization(menuItems, restaurant.menuLocalizations, locale)
+      : menuItems;
   }
-  
-  public async getMenuItemById(id: string): Promise<IMenuItem> {
-    const menuItem = await MenuItem.findById(id);
-    
+
+  public async getMenuItemById(
+    id: string,
+    locale?: SupportedLanguage
+  ): Promise<IMenuItem> {
+    const menuItem = await MenuItem.findById(id).lean();
+
     if (!menuItem) {
       throw new NotFoundError('Menu item not found');
     }
-    
-    return menuItem;
+
+    if (!locale) {
+      return menuItem;
+    }
+
+    const restaurant = await Restaurant.findById(menuItem.restaurantId).select('menuLocalizations');
+    return applyMenuItemLocalization(menuItem, restaurant?.menuLocalizations, locale);
   }
   
   public async createMenuItem(menuItemData: IMenuItem, userId: string): Promise<IMenuItem> {
@@ -90,30 +107,84 @@ export class MenuService {
     
     await MenuItem.findByIdAndDelete(id);
   }
-  
-  public async searchMenuItems(query: string, filters: any = {}): Promise<IMenuItem[]> {
-    const searchQuery: any = { isAvailable: true };
-    
+
+  public async searchMenuItems(
+    query: string | undefined,
+    filters: MenuSearchFilters | Record<string, unknown> = {}
+  ): Promise<IMenuItem[]> {
+    const searchFilters: MenuSearchFilters = {
+      ...filters,
+      query: query ?? (filters as MenuSearchFilters).query,
+    };
+
+    return this.searchMenuItemsWithFilters(searchFilters);
+  }
+
+  public async searchMenuItemsWithFilters(filters: MenuSearchFilters): Promise<IMenuItem[]> {
+    const {
+      query,
+      category,
+      priceMin,
+      priceMax,
+      dietaryRestrictions,
+      excludeAllergens,
+      minSpiceLevel,
+      maxSpiceLevel,
+      restaurantId,
+      sortBy,
+      sortOrder = 'asc',
+    } = filters;
+
+    const searchQuery: Record<string, unknown> = { isAvailable: true };
+
     if (query) {
       searchQuery.$text = { $search: query };
     }
-    
-    if (filters.category) {
-      searchQuery.category = filters.category;
+
+    if (category) {
+      searchQuery.category = category;
     }
-    
-    if (filters.priceMin || filters.priceMax) {
+
+    if (restaurantId) {
+      searchQuery.restaurantId = restaurantId;
+    }
+
+    if (priceMin !== undefined || priceMax !== undefined) {
       searchQuery.price = {};
-      
-      if (filters.priceMin) {
-        searchQuery.price.$gte = Number(filters.priceMin);
+
+      if (priceMin !== undefined) {
+        (searchQuery.price as Record<string, number>).$gte = Number(priceMin);
       }
-      
-      if (filters.priceMax) {
-        searchQuery.price.$lte = Number(filters.priceMax);
+
+      if (priceMax !== undefined) {
+        (searchQuery.price as Record<string, number>).$lte = Number(priceMax);
       }
     }
-    
-    return MenuItem.find(searchQuery).sort({ price: 1 });
+
+    const dietaryList = toArray(dietaryRestrictions);
+    if (dietaryList?.length) {
+      searchQuery.dietaryRestrictions = { $all: dietaryList };
+    }
+
+    const allergenList = toArray(excludeAllergens);
+    if (allergenList?.length) {
+      searchQuery.allergens = { $nin: allergenList };
+    }
+
+    if (minSpiceLevel !== undefined || maxSpiceLevel !== undefined) {
+      searchQuery.spiceLevel = {};
+
+      if (minSpiceLevel !== undefined) {
+        (searchQuery.spiceLevel as Record<string, number>).$gte = Number(minSpiceLevel);
+      }
+
+      if (maxSpiceLevel !== undefined) {
+        (searchQuery.spiceLevel as Record<string, number>).$lte = Number(maxSpiceLevel);
+      }
+    }
+
+    const sort = buildMenuSort(sortBy, sortOrder);
+
+    return MenuItem.find(searchQuery).sort(sort);
   }
 }

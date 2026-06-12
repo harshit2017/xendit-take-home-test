@@ -5,6 +5,8 @@ import MenuItem from '../models/menu.model';
 import User from '../models/user.model';
 import { IOrder, OrderStatus, PaymentStatus, IOrderItem } from '../types/order.types';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../utils/errors';
+import { notificationService } from './notification.service';
+import { loyaltyService } from './loyalty.service';
 
 export class OrderService {
   public async getAllOrders(userId: string, role: string): Promise<IOrder[]> {
@@ -198,13 +200,14 @@ export class OrderService {
         throw new BadRequestError('Customer can only cancel the order');
       }
       
-      // Customer can only cancel if order is still pending or confirmed
-      if (![OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(order.status)) {
+      // Customer can only cancel if order is still pending, confirmed, or scheduled
+      if (![OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SCHEDULED].includes(order.status)) {
         throw new BadRequestError('Cannot cancel order that is already being prepared or delivered');
       }
     }
     
-    // Update order status
+    const previousStatus = order.status;
+
     order.status = status;
     
     // If order is delivered, set actual delivery time
@@ -213,7 +216,18 @@ export class OrderService {
     }
     
     await order.save();
-    
+
+    await notificationService.sendOrderStatusNotification(
+      order.customerId.toString(),
+      order._id!.toString(),
+      previousStatus,
+      status
+    );
+
+    if (status === OrderStatus.DELIVERED) {
+      await loyaltyService.earnPointsForOrder(order._id!.toString());
+    }
+
     return order;
   }
   
@@ -254,13 +268,20 @@ export class OrderService {
       }
     }
     
-    // Can only cancel if order is still pending or confirmed
-    if (![OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(order.status)) {
+    // Can only cancel if order is still pending, confirmed, or scheduled
+    if (![OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.SCHEDULED].includes(order.status)) {
       throw new BadRequestError('Cannot cancel order that is already being prepared or delivered');
     }
     
-    // Update order status
+    const previousStatus = order.status;
     order.status = OrderStatus.CANCELLED;
     await order.save();
+
+    await notificationService.sendOrderStatusNotification(
+      order.customerId.toString(),
+      order._id!.toString(),
+      previousStatus,
+      OrderStatus.CANCELLED
+    );
   }
 }

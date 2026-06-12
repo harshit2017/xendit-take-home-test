@@ -1,6 +1,6 @@
 // src/models/menu.model.ts
 import mongoose, { Schema, Document } from 'mongoose';
-import { IMenuItem, ICustomizationOption } from '../types/menu.types';
+import { IMenuItem, ICustomizationOption, DietaryRestriction, Allergen } from '../types/menu.types';
 
 const customizationOptionSchema: Schema = new Schema({
   name: {
@@ -64,6 +64,27 @@ const menuItemSchema: Schema = new Schema(
       type: [String],
       default: [],
     },
+    dietaryRestrictions: {
+      type: [String],
+      enum: Object.values(DietaryRestriction),
+      default: [],
+    },
+    allergens: {
+      type: [String],
+      enum: Object.values(Allergen),
+      default: [],
+    },
+    spiceLevel: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    orderCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     isAvailable: {
       type: Boolean,
       default: true,
@@ -83,6 +104,13 @@ menuItemSchema.index({ name: 'text', description: 'text', category: 'text' });
 
 // Create index for filtering by restaurant
 menuItemSchema.index({ restaurantId: 1 });
+
+// Indexes for advanced search filters
+menuItemSchema.index({ isAvailable: 1, dietaryRestrictions: 1 });
+menuItemSchema.index({ isAvailable: 1, allergens: 1 });
+menuItemSchema.index({ isAvailable: 1, spiceLevel: 1 });
+menuItemSchema.index({ isAvailable: 1, orderCount: -1 });
+menuItemSchema.index({ restaurantId: 1, orderCount: -1 });
 
 const MenuItem = mongoose.model<IMenuItem & Document>('MenuItem', menuItemSchema);
 

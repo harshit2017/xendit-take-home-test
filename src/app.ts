@@ -14,6 +14,12 @@ import menuRoutes from './routes/menu.routes';
 import orderRoutes from './routes/order.routes';
 import deliveryRoutes from './routes/delivery.routes';
 import paymentRoutes from './routes/payment.routes';
+import schedulingRoutes from './routes/scheduling.routes';
+import notificationRoutes from './routes/notification.routes';
+import loyaltyRoutes from './routes/loyalty.routes';
+import analyticsRoutes from './routes/analytics.routes';
+import translationRoutes from './routes/translation.routes';
+import { languageMiddleware } from './middlewares/language.middleware';
 
 class App {
   public app: Application;
@@ -39,6 +45,7 @@ class App {
     // Body parsing middleware
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(languageMiddleware);
   }
 
   private configureRoutes(): void {
@@ -48,6 +55,11 @@ class App {
     this.app.use('/api/orders', orderRoutes);
     this.app.use('/api/delivery', deliveryRoutes);
     this.app.use('/api/payments', paymentRoutes);
+    this.app.use('/api/scheduling', schedulingRoutes);
+    this.app.use('/api/notifications', notificationRoutes);
+    this.app.use('/api/loyalty', loyaltyRoutes);
+    this.app.use('/api/analytics', analyticsRoutes);
+    this.app.use('/api/translations', translationRoutes);
 
     // Health check route
     this.app.get('/health', (req, res) => {

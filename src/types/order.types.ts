@@ -1,6 +1,8 @@
 // src/types/order.types.ts
 
 export enum OrderStatus {
+  SCHEDULED = 'scheduled',
+  SCHEDULED_PROCESSING = 'scheduled_processing',
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   PREPARING = 'preparing',
@@ -51,6 +53,27 @@ export interface IOrder {
   specialInstructions?: string;
   estimatedDeliveryTime?: Date;
   actualDeliveryTime?: Date;
+  isScheduled?: boolean;
+  scheduledFor?: Date;
+  processingStartedAt?: Date;
+  processedAt?: Date;
+  upcomingNotificationSent?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface ICreateScheduledOrderInput {
+  restaurantId: string;
+  items: IOrderItem[];
+  paymentMethod?: string;
+  deliveryAddress?: IOrder['deliveryAddress'];
+  specialInstructions?: string;
+  scheduledFor: Date | string;
+}
+
+export interface IUpdateScheduledOrderInput {
+  scheduledFor?: Date | string;
+  items?: IOrderItem[];
+  specialInstructions?: string;
+  deliveryAddress?: IOrder['deliveryAddress'];
 }
